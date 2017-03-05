@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<head>
+    <title>cs 3300 - HW 1</title>
+    <style>
+    body{
+        text-align: center;
+        margin-left:300px;
+        margin-right:300px;
+        line-height: 1.5;
+    }
+
+    table {
+          border-collapse: collapse;
+          border-spacing: 0;
+          margin:0;
+          text-align: center;
+          margin-left:auto;
+          margin-right:auto;
+      }
+    th, td {
+          padding: 1rem;
+          text-align: right;
+          border: 1px dotted #ccc;
+    }
+    </style>
+</head>
+<body>
+<h2>CS 3300 Homework 1 Netid:ys764</h2>
+<br>
+<p>
+    <h2>Problem 1 Die simulator</h2>
+    <div id="p1"></div>
+        <script>
+            function roll(){
+                var array = [1,2,3,4,5,6];
+                var length = array.length;
+                var i = Math.floor(Math.random()*length);
+                return array[i];
+            }
+            var res = [];
+            for (j=0;j<10;j++){
+                res.push(roll());
+            }
+            document.getElementById("p1").innerText = res.join(', ');
+        </script>
+</p>
+
+<p>
+    <h2>Problem 2 Weird die simulator</h2>
+    <div id="p2"></div>
+        <script>
+            function diceFactory (values){
+                return function (){
+                    var length = values.length;
+                    var i = Math.floor(Math.random()*length);
+                    return values[i];
+                    }
+            }
+            function rgb() {
+                return diceFactory(['red','green','blue'])();
+            }
+            var res = []
+            for (j=0;j<10;j++){
+                res.push(rgb());
+            }
+            document.getElementById("p2").innerText = res.join(', ');
+        </script>
+</p>
+
+<p>
+    <h2>Problem 3 Non-transitive dice generator</h2>
+    <div id="p3"></div>
+        <script>
+            function nonTransitiveFactory (num){
+                return function (){
+                    if (num == 0)
+                        var array = [1,1,1,5,5,5];
+                    else if (num == 1)
+                        var array = [0,0,4,4,4,4];
+                    else if (num == 2)
+                        var array = [3,3,3,3,3,3];
+                    else
+                        var array = [2,2,2,2,6,6];
+
+                    var length = array.length;
+                    var i = Math.floor(Math.random()*length);
+                    return array[i];
+                    }
+            }
+            function oneFive() {
+                return nonTransitiveFactory(0)();
+            }
+            var res = [];
+            for (j=0;j<10;j++){
+                res.push(oneFive());
+            }
+            document.getElementById("p3").innerText = res.join(', ');
+        </script>
+</p>
+
+<p>
+    <h2>Problem 4 Rolling many times</h2>
+    <div id="p4"></div>
+        <script>
+            function rollNTimes (roll_1,roll_2,num){
+                var cnt = 0;
+                for (i=0;i<num;++i){
+                    var a = roll_1();
+                    var b = roll_2();
+                    if (a>b) cnt++;
+                }
+                return cnt
+            }
+
+            var res = [];
+            for (j=0;j<10;j++){
+                res.push(rollNTimes(nonTransitiveFactory(0),nonTransitiveFactory(1),100));
+            }
+            document.getElementById("p4").innerText = res.join(', ');
+        </script>
+</p>
+
+<p>
+    <h2>Problem 5 All pairs comparison</h2>
+    <div id="p5"></div>
+        <script>
+        var matrix = [["-","E0","E1","E2","E3"],["E0",0,0,0,0],["E1",0,0,0,0],["E2",0,0,0,0],["E3",0,0,0,0]];
+        for (var y=0;y<4;++y){
+            for (var z=0;z<4;++z){
+                var x =rollNTimes(nonTransitiveFactory(y),nonTransitiveFactory(z),1000);
+                matrix[y+1][z+1]=x;
+            }
+        }
+
+        var HTML = "<table width=50px><tr>";
+        for(j=0;j<=4;j++){
+            for (k=0;k<=4;k++){
+                HTML += "<td align=center>"+matrix[j][k]+"</td>";
+            }
+            HTML += "</tr>";
+        }
+        HTML += "</table>";
+        document.getElementById("p5").innerHTML = HTML;
+        </script>
+
+        <br>According to the table, we can calculate the probabilities of P(E0>E1),P(E1>E2),P(E2>E3) and P(E3>E0) are nearly 0.65, larger than 0.5. In this situation, even if E0 rolls higher than E1 more than half the time, E1 rolls higher than E2 more than half the time and E2 rolls higher than E3 more than half the time, it is not true that E0 rolls higher than E3 more than half the time. It is called non-transitive dice.<br>
+
+</p>
+
+
+</body>
