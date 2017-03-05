@@ -1,0 +1,331 @@
+<!DOCTYPE HTML>
+
+<html>
+  <head>
+  <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet">
+  <title>Test</title>
+    <style>
+      body{
+        text-align:center
+      }
+
+      .row {
+      width: 1020px;
+      display: flex;
+      margin:0 auto;
+      }
+
+      .col {
+          width: 50%;
+      }
+
+      rect.border {
+        stroke: #ffffff;
+        stroke-width:1px;
+      }
+
+      text.scale {
+        font-size: 8pt;
+        font-family: 'PT Sans', sans-serif;
+        fill: #000000;
+      }
+
+      text.title {
+        font-size: 10pt;
+        font-family: 'PT Sans', sans-serif;
+        fill: #000000;
+      }
+
+      text.night {
+        fill: #DADADA;
+      }
+    </style>
+    <script src="http://d3js.org/d3.v3.js"></script>
+  </head>
+  <body>
+    <div id="heatmap" class = "row"></div>
+    <div class="row">
+      <div id="rank_day" class = "col"></div>
+      <div id="rank_night" class = "col"></div>
+    </div>
+
+    <script type="text/javascript">
+      var margin = 30;
+      var width = 960;
+      var height = 400;
+      var element_size = Math.floor((width-margin*2) / 24);
+      var level = 9;
+      var colors = ['#fff5f0','#fee0d2','#fcbba1','#fc9272','#fb6a4a','#ef3b2c','#cb181d','#a50f15','#67000d'];
+      var rank_colors = ['#d7191c','#fdae61','#ffffbf','#a6d96a','#1a9641'];
+      var days = ["Sun", "Mon","Tue","Wed","Thur","Fri","Sat"];
+      var times = ["0a","1a","2a","3a","4a","5a","6a","7a","8a","9a","10a","11a","12p","1p","2p","3p","4p","5p","6p","7p","8p", "9p","10p","11p"];
+
+      var svg = d3.select("#heatmap").append("svg")
+          .attr("width", width)
+          .attr("height", height)
+          .append("g")
+          .attr("transform", "translate("+ margin*2.5+","+ margin*2 +")");
+
+      var svg_1 = d3.select("#rank_day").append("svg")
+          .attr("width", width/2)
+          .attr("height", height/2+50)
+          .append("g")
+          .attr("transform", "translate("+ margin*4 +","+ margin +")");
+
+      var svg_2 = d3.select("#rank_night").append("svg")
+          .attr("width", width/2 )
+          .attr("height", height/2+50)
+          .append("g")
+          .attr("transform", "translate("+ margin*4 +","+ margin +")");
+
+      var call;
+      var map = [];
+      var count = [];
+       for(var i=1;i<8;++i){
+        for (var j=1;j<25;++j){
+            map.push({day:i,hour:j,value:0});
+          }
+        };
+
+      d3.json("rows.json",function(json){
+          data = json["data"];
+          console.log("loaded");
+          //part = data.slice(0,15000);
+          call = data.map(function(d){
+            if(d[10] && d[9]){
+              var add = new Date(1970, 1, 1);
+              add.setTime(add.getTime() -add.getTimezoneOffset()*60000 +d[10]*1000);
+              if(add.getFullYear()==2012)
+                  return {
+                    type: d[9],
+                    day: +add.getDay(),
+                    hour: +add.getHours(),
+                    value: +1
+              };
+            };
+          });
+
+          for(var j=1;j<=call.length;++j){
+            d = call[j];
+            if(d){
+              map[d.day*24+d.hour].value += 1;
+              if(d.hour==8 || d.hour==20){
+                if(count.filter(function(e){return e.type === d.type}).length != 0 )
+                {
+                  obj = count.filter(function(e){ return e.type === d.type && e.time===Math.floor(d.hour/12)});
+                  obj[0].val += 1;
+                }
+                else{
+                  var day = {type:d.type,time:0,val:0};
+                  var night = {type:d.type,time:1,val:0};
+                  count.push(day);
+                  count.push(night);
+                  obj = count.filter(function(e){ return e.type === d.type && e.time===Math.floor(d.hour/12)});
+                  obj[0].val += 1;
+                }
+              }
+            }
+          };
+
+      count.sort(function(a,b) {return b.val-a.val;});
+      var rank_night = [];
+      var j = 0;
+      while(rank_night.length<5){
+        if (count[j].time==1) {
+          var night = {type:count[j].type,val:count[j].val};
+          rank_night.push(night);
+        }
+        j+=1;
+      }
+      //console.log(rank_night);
+
+      var rank_day = [];
+      var j = 0;
+      while(rank_day.length<5){
+        if (count[j].time==0) {
+          var day = {type:count[j].type,val:count[j].val};
+          rank_day.push(day);
+        }
+        j+=1;
+      }
+      console.log(rank_day);
+
+      var heatmapChart = function(data){
+          //console.log(data);
+          var dayLabel = svg.selectAll(".dayLabel")
+              .data(days)
+              .enter().append("text")
+              .text(function (d) {return d;})
+              .attr("x", 0)
+              .attr("y", function (d,i) {return i*element_size;})
+              .attr("transform", "translate(-5,"+ element_size/2 +")")
+              .style("text-anchor", "end")
+              .style("alignment-baseline","central")
+              .attr("class", "dayLabel scale");
+
+          var timeLabel = svg.selectAll(".timeLabel")
+              .data(times)
+              .enter().append("text")
+              .text(function(d) {return d;})
+              .attr("x", function(d,i) {return i*element_size;})
+              .attr("y", 0)
+              .style("text-anchor", "middle")
+              .style("alignment-baseline","central")
+              .attr("transform", "translate("+ element_size/ 2 +",-10)")
+              .attr("class", function(d, i) {
+                if(i < 7 || i > 18) return "timeLabel scale night";
+                  else return "timeLabel scale";});
+
+          var xtitle = svg.append("text")
+              .text("Hours")
+              .attr("x", width/2)
+              .attr("y", 0)
+              .style("text-anchor", "end")
+              .style("alignment-baseline","central")
+              .attr("transform", "translate(-5,"+ -(element_size-5) +")")
+              .attr("class", "title");
+
+          var ytitle = svg.append("text")
+              .text("Days")
+              .attr("x", 0)
+              .attr("y", height/2)
+              .style("text-anchor", "end")
+              .style("alignment-baseline","central")
+              .attr("transform", "rotate(-90) translate(-120,-250)")
+              .attr("class", "title");
+
+          var largest = d3.max(data, function (d){return d.value;});
+
+          var colorScale = d3.scale.quantize()
+            .domain([0, level - 1, largest])
+            .range(colors);
+
+          var elements = svg.selectAll(".hour")
+            .data(data)
+            .enter().append("rect")
+            .attr("x", function(d){return (d.hour-1) * element_size;})
+            .attr("y", function(d){return (d.day-1) * element_size;})
+            .attr("class", "hour border")
+            .attr("width", element_size)
+            .attr("height", element_size)
+            .style("fill", function(d){return colorScale(d.value);});
+
+          var labels = [];
+
+          for(var i = 0;i<9;++i){
+            labels.push(largest/9*i);
+          }
+          //console.log(labels);
+
+          var label = svg.selectAll(".label")
+            .data(labels)
+            .enter().append("g")
+            .attr("class", "label");
+
+          label.append("rect")
+            .attr("x", function(d, i){return element_size*2*(1.5+i);})
+            .attr("y", 7*element_size + 30)
+            .attr("class","border")
+            .attr("width", element_size*2)
+            .attr("height", element_size / 2)
+            .style("fill", function(d, i){return colors[i];});
+
+          label.append("text")
+            .attr("class", "scale")
+            .text(function(d){return Math.floor(d);})
+            .style("text-anchor", "middle")
+            .attr("x", function(d, i) { return element_size*2*(1.5+i); })
+            .attr("y", 7.75*element_size + 30);
+
+          svg.append("text")
+            .attr("class", "scale")
+            .text(largest)
+            .style("text-anchor", "middle")
+            .attr("x", element_size*2*(1.5+9))
+            .attr("y", 7.75*element_size + 30);
+
+          svg.append("text")
+            .attr("class", "title")
+            .text("Number of Calls:")
+            .style("text-anchor", "end")
+            .style("alignment-baseline","hanging")
+            .attr("x", element_size*3-20)
+            .attr("y", 8*element_size);
+
+
+      };
+
+      var barChart = function(data,k,name){
+
+        var xscale = d3.scale.linear()
+          .domain([0,3000])
+          .range([0,360]);
+
+        var yscale = d3.scale.linear()
+                .domain([0,4])
+                .range([0,360]);
+
+        var rr = k.append('g')
+                .attr("transform", "translate(150,0)")
+                .attr('id','bars');
+
+        k.selectAll('rect')
+          .data(data)
+          .enter().append('rect')
+          .attr('height',element_size*0.5)
+          .attr("x",0)
+          .attr("y", function(d,i){ return i*element_size;})
+          .style('fill',function(d,i){return rank_colors[i];})
+          .attr('width',function(d) {return xscale(d.val);});
+
+
+        var number = k.selectAll('num')
+            .data(data)
+            .enter().append('text')
+            .attr("x", function(d) {
+              if(d.val>200) return xscale(d.val)-5;
+              else return xscale(d.val)+5;})
+            .attr("y", function(d,i){ return i*element_size+ element_size / 4; })
+            .style("text-anchor", function(d) {
+              if(d.val>200) return "end";
+              else return "start";})
+            .style("alignment-baseline","central")
+            .text(function(d){ return d.val; })
+            .attr("class",function(d,i) {
+              if(i == 0) return "scale num night";
+              else return "scale num";});
+
+        var rank = k.selectAll(".rankLabel")
+            .data(data)
+            .enter().append("text")
+            .text(function (d) { return d.type; })
+            .attr("class","scale rankLabel")
+            .attr("x", 0)
+            .attr("y", function (d, i) { return i * element_size; })
+            .style("text-anchor", "end")
+            .style("alignment-baseline","central")
+            .attr("transform", "translate(-5," + element_size / 4 + ")");
+
+        var title = k.append("text")
+            .attr("class", "title")
+            .text("Top 5 Calling Type at "+name)
+            .style("text-anchor", "middle")
+            .attr("x", 75)
+            .attr("y", -10);
+        };
+
+        heatmapChart(map);
+
+        barChart(rank_day,svg_1,"daytime (8am)");
+        barChart(rank_night,svg_2,"night (8pm)");
+
+      });
+    </script>
+  </body>
+</html>
+<!--
+http://bl.ocks.org/tjdecke/5558084
+https://data.seattle.gov/Public-Safety/Seattle-Real-Time-Fire-911-Calls/kzjm-xkqj/data
+http://bl.ocks.org/syntagmatic/29bccce80df0f253c97e
+-->
