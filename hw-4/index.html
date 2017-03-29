@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<head>
+    <title>cs 3300 - HW 4 Netid:ys764 Yue Shi</title>
+    <script src="https://d3js.org/d3.v4.min.js" charset="utf-8"></script>
+    <script src="https://d3js.org/topojson.v2.min.js"></script>
+    <style>
+    body{
+        text-align: center;
+        margin-left:300px;
+        margin-right:300px;
+        line-height: 1.5;
+    }
+    svg { border: solid #ccc 1px; }
+
+    rect.bar { fill: #4169e1; }
+    text.label {
+        font-size: x-small;
+        dominant-baseline: middle;
+        text-anchor: middle;
+    }
+    circle.color{
+        stroke: #eee;
+    }
+
+    </style>
+    <link href="https://fonts.googleapis.com/css?family=Pangolin" rel="stylesheet">
+</head>
+<body>
+<h2>CS 3300 Homework 4 Netid:ys764</h2>
+
+<script>
+    //Problem 1
+    function plotHistogram(id,num){
+        var height = 400;
+        var width = 800;
+        var padding = 40;
+
+        var bin_num = 15;
+
+        var counter = d3.histogram()
+        .thresholds(bin_num)
+        .domain([d3.min(num),d3.max(num)]);
+
+        var bins = counter(num);
+
+        var svg = d3.select(id).append("svg")
+        .attr("height",height)
+        .attr("width",width);
+
+        var xScale = d3.scaleBand()
+        .domain(bins.map(function (bin) {return bin.x0;}))
+        .range([padding,width-padding]);
+
+        var yScale = d3.scaleLinear()
+        .domain([0,d3.max(bins,function(bin){return bin.length;})])
+        .range([height-padding,padding]);
+
+        var yaxis = d3.axisLeft(yScale);
+        svg.append("g")
+        .attr("transform","translate("+padding+",0)")
+        .attr("class", "label")
+        .call(yaxis.ticks(5).tickFormat(d3.format(".0f")));
+
+        var xaxis = d3.axisBottom(xScale);
+        svg.append("g")
+        .attr("transform","translate(0,"+(height-padding)+")")
+        .call(xaxis.ticks(bin_num).tickFormat(d3.format(".2f")));
+
+        bins.forEach(function (bin) {
+            svg.append("rect").attr("class", "bar")
+            .attr("x", xScale(bin.x0))
+            .attr("y", yScale(bin.length))
+            .attr("width", xScale.bandwidth() - 2)
+            .attr("height", yScale(0) - yScale(bin.length));
+        });
+    }
+</script>
+
+<h2>2. Normal Distribution</h2>
+<div id="p2"></div>
+
+<h2>3. Mean of Normal Distribution</h2>
+<div id="p3"></div>
+<p>Yes, it have roughly the same shape as the plot from Problem 2. However, the x-scales are different. The scale range in Problem 3 is much smaller than Problem 2. They are more closer to 0 in Problem 3.</p>
+
+<h2>4. Lognormal Distribution</h2>
+<div id="p4"></div>
+
+<h2>5. Mean of Lognormal Distribution</h2>
+<div id="p5"></div>
+<p>Yes, it have roughly the same shape as the plot from Problem 2. However, the x-scales are different. There are more data around 1.5-1.7 in Problem 5.</p>
+
+<h2>6. Exponential Distribution</h2>
+<div id="p6"></div>
+
+<h2>7. Mean of Exponential Distribution</h2>
+<div id="p7"></div>
+<p>No, they look really different. The histogram in Problem 6 has a long tail on large numbers and has most data ranging from 0-1. While the histogram in Problem 7 is more balanced and has more data around 1.</p>
+
+<h2>8. Gamma Distribution</h2>
+<div id="p8"></div>
+
+<h2>9. Mean of Gamma Distribution</h2>
+<div id="p9"></div>
+<p>Yes, it have roughly the same shape as the plot from Problem 8. However, the histogram in Problem 9 is more clustering around 10 and the one in Problem 8 is more sparse.</p>
+
+<h2>10. Cauchy Distribution</h2>
+<div id="p10"></div>
+
+<h2>11. Mean of Cauchy Distribution</h2>
+<div id="p11"></div>
+<p>At the first glance, they look quite different. But after observing the difference in x-scale, I found that, there may be some outliers in this histogram which made the bin size large and shape wired. If we remove those outliers, the histogram may have a similar shape with those in Problem 3, 5, 7, 9. And they all have a high frequence on the mean of its original distribution.</p>
+
+<script>
+    //Problem 2
+    function gaussian(){
+        return d3.randomNormal(0,1)();
+    }
+    function gaussian1000(){
+        var array=[];
+        for(i=0;i<1000;++i){
+            array.push(gaussian());
+        }
+        return array;
+    }
+    plotHistogram("#p2",gaussian1000());
+
+    //Problem 3
+    function gaussianmean() {
+        var gaussianmean = [];
+        for (k=0;k<1000;k++) {
+            var gaussianarray = gaussian1000();
+            gaussianmean.push(d3.mean(gaussianarray));
+        }
+        return gaussianmean;
+    }
+    plotHistogram("#p3",gaussianmean());
+
+    //Problem 4
+    function lognormal1000() {
+        var lognormal = [];
+        for (i=0;i<1000;i++) {
+            lognormal.push(Math.exp(gaussian()));
+        }
+        return lognormal;
+    }
+    plotHistogram("#p4",lognormal1000());
+
+    //Problem 5
+    function lognormalmean() {
+        var lognormalmean = [];
+        for (k=0;k<1000;k++) {
+            var lognormalarray = lognormal1000();
+            lognormalmean.push(d3.mean(lognormalarray));
+        }
+        return lognormalmean;
+    }
+    plotHistogram("#p5",lognormalmean());
+
+    //Problem 6
+    function exponential(){
+        return -Math.log(Math.random());
+    }
+    function exponential1000() {
+        var exp = [];
+        for (i=0;i<1000;i++) {
+            exp.push(exponential());
+        }
+        return exp;
+    }
+    plotHistogram("#p6",exponential1000());
+
+    //Problem 7
+    function exponentialmean() {
+        var exponentialmean = [];
+        for (k=0;k<1000;k++) {
+            var exponentialarray = exponential1000();
+            exponentialmean.push(d3.mean(exponentialarray));
+        }
+        return exponentialmean;
+    }
+    plotHistogram("#p7",exponentialmean());
+
+    //Problem 8
+    function gamma1000() {
+    var gammaarray = [];
+    for (i=0;i<1000;i++) {
+        var gamma = 0;
+        for (n=0;n<10;n++) {
+            gamma = gamma + exponential();
+        }
+        gammaarray.push(gamma);
+    }
+        return gammaarray;
+     }
+     plotHistogram("#p8",gamma1000());
+
+    //Problem 9
+    function gammamean() {
+        var gammamean = [];
+        for (k=0;k<1000;k++) {
+            gammamean.push(d3.mean(gamma1000()));
+        }
+        return gammamean;
+    }
+    plotHistogram("#p9",gammamean());
+
+    //Problem 10
+    function cauchy1000() {
+    var cauchyarray = [];
+    for (i=0;i<1000;i++) {
+        cauchyarray.push((gaussian()/gaussian()));
+    }
+        return cauchyarray;
+    }
+    plotHistogram("#p10",cauchy1000());
+
+    //Problem 11
+    function cauchymean() {
+        var cauchymean = [];
+        for (k=0;k<1000;k++) {
+            cauchymean.push(d3.mean(cauchy1000()));
+        }
+        return cauchymean;
+    }
+    plotHistogram("#p11",cauchymean());
+</script>
+
+<p>
+    <h2>12. HSLa colors</h2>
+    <svg id="c" height="500" width="500"></svg>
+    <p>HUE:<input id="hue" type="range" min="0" max="360" value="180"/></p>
+    <P>OPACITY:<input id="opacity" type="range" min="0" max="1" step="0.01" value="0.5"/></P>
+
+    <script>
+
+        var dic = [];
+        for(i=0;i<=10;++i){
+            for(k=0;k<=10;++k){
+                dic.push({saturation:0.1*i,lightness:0.1*k});
+            }
+        }
+
+        var circles = d3.select("#c");
+        circles.selectAll(".color")
+          .data(dic)
+          .enter().append("circle")
+          .attr("cx", function(d){return (d.saturation*10) * 40 + 50;})
+          .attr("cy", function(d){return (d.lightness*10) * 40 + 50;})
+          .attr("class", "color")
+          .attr("r", 20)
+          .style("fill", function(d){
+            return d3.hsl(hue.value,d.saturation,d.lightness,opacity.value)});
+
+
+        function showCircles(hue,opacity){
+            circles.selectAll(".color")
+            .style("fill", function(d){
+                return d3.hsl(hue,d.saturation,d.lightness,opacity)});
+        }
+
+        d3.select("#hue").on("input", function() {
+          showCircles(+this.value,opacity.value);
+        })
+
+        d3.select("#opacity").on("input", function() {
+          showCircles(hue.value,+this.value);
+        })
+
+    </script>
+
+</p>
+
+</body>
